@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 
     int BlurSize = 21,
         min = 0, max = 1000, Max = 1000,
-        hmin = 0, smin = 0, vmin = 0,
+        h = 0, dh = 0, smin = 0, vmin = 0,
         hmax = 255, smax = 255, vmax = 255;
 
     VideoCapture cap;
@@ -26,8 +26,8 @@ int main(int argc, char **argv)
     namedWindow(thresholdWindow, 0);
 
     /*Создание ползунков для определения границ искомых на картинке значений*/
-    createTrackbar("H min: ", trackbarWindow, &hmin, hmax);
-    createTrackbar("H max: ", trackbarWindow, &hmax, hmax);
+    createTrackbar("H: ", trackbarWindow, &h, hmax);
+    createTrackbar("dH: ", trackbarWindow, &dh, hmax);
     createTrackbar("S min: ", trackbarWindow, &smin, smax);
     createTrackbar("S max: ", trackbarWindow, &smax, smax);
     createTrackbar("V min: ", trackbarWindow, &vmin, vmax);
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
         cap >> frame;
         cvtColor(frame, HSV, COLOR_BGR2HSV);
         medianBlur(HSV, blurred, BlurSize);
-        inRange(blurred, Scalar(hmin, smin, vmin), Scalar(hmax, smax, vmax), threshold);
+        inRange(blurred, Scalar(h-dh, smin, vmin), Scalar(h+dh, smax, vmax), threshold);
 
         for (int y=0; y<threshold.rows; y++)
             for (int x = 0; x < threshold.cols; x++) {
