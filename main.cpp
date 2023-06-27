@@ -1,7 +1,8 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <cstdlib>                      //для exit(int);
+#include <cstdlib>    //для exit(int);
 
+using namespace std;
 using namespace cv;
 
 int main(int argc, char **argv)
@@ -10,15 +11,17 @@ int main(int argc, char **argv)
 
     char mainWindow[] = "Main";
     char trackbarWindow[] = "Trackbar";
-    int thrmin = 0, thrmax = 255;
+    int thr = 150, thrmax = 255,
+        bl = 21, blmax = 22;
     VideoCapture cap;
-    Mat frame, grayscale, binthreshold;
+    Mat frame, blurred, grayscale, binthreshold;
 
     /*Создание окон*/
     namedWindow(mainWindow, 0);
     namedWindow(trackbarWindow, 0);
 
-    createTrackbar("Gray threshold: ", trackbarWindow, &thrmin, thrmax);
+    createTrackbar("Gray threshold: ", trackbarWindow, &thr, thrmax);
+    createTrackbar("Preparation-blur intensity: ", trackbarWindow, &bl, blmax);
 
     /*Запуск камеры*/
     cap.open(0);
@@ -30,9 +33,20 @@ int main(int argc, char **argv)
     while (1) {
         cap >> frame;
         cvtColor(frame, grayscale, COLOR_BGR2GRAY);
-        threshold(grayscale, binthreshold, thrmin, 255, THRESH_BINARY);
-        //findContours(grayscale,)
-        imshow(mainWindow, binthreshold);
+        threshold(grayscale, binthreshold, thr, 255, THRESH_BINARY);
+        medianBlur(binthreshold, blurred, bl);
+        
+        /*Поиск контуров*/
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
+        findContours(blurred, contours, hierarchy, RETR_TREE, CHAIN_APPROX_NONE);
+
+        /*Рисование контуров*/
+        Mat copy = frame.clone();
+        drawContours(copy, contours, -1, Scalar(255, 0, 0), 2);
+        
+        /*Вывод изображения*/
+        imshow(mainWindow, copy);
         if (waitKey(10) == 27)
             break;
     }
