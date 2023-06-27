@@ -10,59 +10,29 @@ int main(int argc, char **argv)
 
     char mainWindow[] = "Main";
     char trackbarWindow[] = "Trackbar";
-    char thresholdWindow[] = "Threshold";
-
-    int BlurSize = 21,
-        min = 0, max = 1000, Max = 1000,
-        hmin = 0, smin = 0, vmin = 0,
-        hmax = 255, smax = 255, vmax = 255;
-
+    int thrmin = 0, thrmax = 255;
     VideoCapture cap;
-    Mat frame, HSV, threshold, blurred;
+    Mat frame, grayscale, binthreshold;
 
     /*Создание окон*/
     namedWindow(mainWindow, 0);
     namedWindow(trackbarWindow, 0);
-    namedWindow(thresholdWindow, 0);
 
-    /*Создание ползунков для определения границ искомых на картинке значений*/
-    createTrackbar("H min: ", trackbarWindow, &hmin, hmax);
-    createTrackbar("H max: ", trackbarWindow, &hmax, hmax);
-    createTrackbar("S min: ", trackbarWindow, &smin, smax);
-    createTrackbar("S max: ", trackbarWindow, &smax, smax);
-    createTrackbar("V min: ", trackbarWindow, &vmin, vmax);
-    createTrackbar("V max: ", trackbarWindow, &vmax, vmax);
-    createTrackbar("Size min: ", trackbarWindow, &min, max);
-    createTrackbar("Size max: ", trackbarWindow, &max, max);
+    createTrackbar("Gray threshold: ", trackbarWindow, &thrmin, thrmax);
 
-
-
+    /*Запуск камеры*/
     cap.open(0);
     if (!cap.isOpened()) {
         std::cout << "Камера не может быть открыта" << std::endl;
         exit(1);
     }
 
-    //moveWindow("First OpenCV Application", 0, 45);
     while (1) {
         cap >> frame;
-        cvtColor(frame, HSV, COLOR_BGR2HSV);
-        medianBlur(HSV, blurred, BlurSize);
-        inRange(blurred, Scalar(hmin, smin, vmin), Scalar(hmax, smax, vmax), threshold);
-
-        for (int y=0; y<threshold.rows; y++)
-            for (int x = 0; x < threshold.cols; x++) {
-                int value = threshold.at<uchar>(y, x);
-                if (value == 255) {
-                    Rect rect;
-                    int count = floodFill(threshold, Point(x, y), Scalar(200), &rect);
-                    if (rect.width >= min && rect.width <= max && rect.height >= min && rect.height <= max)
-                        rectangle(frame, rect, Scalar(255, 0, 255, 4));
-                }
-            }
-
-        imshow(mainWindow, frame);
-        imshow(thresholdWindow, threshold);
+        cvtColor(frame, grayscale, COLOR_BGR2GRAY);
+        threshold(grayscale, binthreshold, thrmin, 255, THRESH_BINARY);
+        //findContours(grayscale,)
+        imshow(mainWindow, binthreshold);
         if (waitKey(10) == 27)
             break;
     }
